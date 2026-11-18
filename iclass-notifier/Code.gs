@@ -7,7 +7,7 @@
  *
  * 需要的「指令碼屬性」（專案設定 → 指令碼屬性）：
  *  LINE_CHANNEL_ACCESS_TOKEN  必填
- *  LINE_USER_ID               必填（U 開頭）
+ *  LINE_USER_ID               選填（U 開頭；沒填就改用「廣播」，傳給所有加官方帳號好友的人＝只有你）
  *  ICLASS_COOKIE              選填（B 方案用；沒填 B 就不跑）
  *  其他可選設定見下方 CONFIG 的說明。
  *
@@ -40,8 +40,8 @@ const TZ = 'Asia/Taipei';
 /** 第一次執行：建立日曆、標籤、排程，並傳一則測試訊息。之後改設定也可以重跑。 */
 function setup() {
   const p = props_();
-  if (!p.getProperty('LINE_CHANNEL_ACCESS_TOKEN') || !p.getProperty('LINE_USER_ID')) {
-    throw new Error('請先在「專案設定 → 指令碼屬性」填入 LINE_CHANNEL_ACCESS_TOKEN 和 LINE_USER_ID');
+  if (!p.getProperty('LINE_CHANNEL_ACCESS_TOKEN')) {
+    throw new Error('請先在「專案設定 → 指令碼屬性」填入 LINE_CHANNEL_ACCESS_TOKEN');
   }
   const cal = getCalendar_();
   getLabel_();
@@ -369,7 +369,9 @@ function pushTexts_(texts) {
   const p = props_();
   const token = p.getProperty('LINE_CHANNEL_ACCESS_TOKEN');
   const to = p.getProperty('LINE_USER_ID');
-  if (!token || !to) throw new Error('缺少 LINE_CHANNEL_ACCESS_TOKEN 或 LINE_USER_ID');
+  if (!token) throw new Error('缺少 LINE_CHANNEL_ACCESS_TOKEN');
+  // 有 User ID 用 push；沒有就用 broadcast（官方帳號只有你一個好友時效果一樣）
+  const endpoint = 'https://api.line.me/v2/bot/message/' + (to ? 'push' : 'broadcast');
 
   const bubbles = packTexts_(texts, 4800);
   for (let i = 0; i < bubbles.length; i += 5) {
@@ -379,14 +381,13 @@ function pushTexts_(texts) {
       Logger.log('本月 LINE 額度已用完（%s），略過：%s', used, bubbles.slice(i, i + 5).join(' / '));
       return;
     }
-    const res = UrlFetchApp.fetch('https://api.line.me/v2/bot/message/push', {
+    const body = { messages: bubbles.slice(i, i + 5).map(function (t) { return { type: 'text', text: t }; }) };
+    if (to) body.to = to;
+    const res = UrlFetchApp.fetch(endpoint, {
       method: 'post',
       contentType: 'application/json',
       headers: { Authorization: 'Bearer ' + token },
-      payload: JSON.stringify({
-        to: to,
-        messages: bubbles.slice(i, i + 5).map(function (t) { return { type: 'text', text: t }; }),
-      }),
+      payload: JSON.stringify(body),
       muteHttpExceptions: true,
     });
     if (res.getResponseCode() !== 200) {

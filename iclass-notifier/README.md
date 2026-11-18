@@ -55,7 +55,7 @@ B 不填 Cookie 也沒關係，A 一樣會正常運作。
 | 屬性 | 值 | 必填 |
 |---|---|---|
 | `LINE_CHANNEL_ACCESS_TOKEN` | 步驟 2-5 的 token | ✅ |
-| `LINE_USER_ID` | 步驟 2-4 的 `U...` | ✅ |
+| `LINE_USER_ID` | 步驟 2-4 的 `U...`（不填就改用廣播，官方帳號只有你一個好友時效果一樣） | 選填 |
 | `ICLASS_COOKIE` | 步驟 5 的 Cookie | 選填（B） |
 | `GMAIL_QUERY` | 自訂 Gmail 搜尋條件（見「調整」） | 選填 |
 | `ICLASS_PAGES` | B 要看的頁面，逗號分隔，預設 `/dashboard` | 選填 |
